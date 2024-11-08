@@ -1,0 +1,53 @@
+import java.util.*;
+
+class MacroProcessor {
+    static Map<String, List<String>> macroDefs = new HashMap<>(); // Stores macros and their definitions
+
+    // Pass-1: Macro definition
+    static void pass1(List<String> code) {
+        List<String> macroLines = null;
+        String macroName = null;
+        
+        for (String line : code) {
+            if (line.startsWith("MACRO")) { // Start of macro
+                macroLines = new ArrayList<>();
+            } else if (line.startsWith("MEND")) { // End of macro
+                if (macroName != null) macroDefs.put(macroName, macroLines);
+                macroName = null;
+            } else if (macroLines != null && macroName == null) { // Define macro name
+                macroName = line.trim();
+            } else if (macroLines != null) {
+                macroLines.add(line); // Add macro lines
+            }
+        }
+    }
+
+    // Pass-2: Macro expansion
+    static List<String> pass2(List<String> code) {
+        List<String> expandedCode = new ArrayList<>();
+        
+        for (String line : code) {
+            if (macroDefs.containsKey(line.trim())) { // Expand macro if called
+                expandedCode.addAll(macroDefs.get(line.trim()));
+            } else if (!line.startsWith("MACRO") && !line.startsWith("MEND")) {
+                expandedCode.add(line); // Copy non-macro lines
+            }
+        }
+        return expandedCode;
+    }
+
+    public static void main(String[] args) {
+        // Sample code with macro definition and calls
+        List<String> code = Arrays.asList(
+            "MACRO", "INCREMENT", "ADD R1, #1", "MEND",
+            "MOV R1, #0", "INCREMENT", "INCREMENT", "MOV R2, R1"
+        );
+
+        pass1(code); // Process Pass-1
+        List<String> expandedCode = pass2(code); // Process Pass-2 and expand macros
+
+        // Print expanded code
+        System.out.println("Expanded Code:");
+        expandedCode.forEach(System.out::println);
+    }
+}
